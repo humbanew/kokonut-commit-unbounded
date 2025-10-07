@@ -21,6 +21,10 @@ inputs:
     description: The AI model to use (e.g., gpt-4, claude-2, gemini-1.5).
     required: false
     default: gpt-4
+  agent_manufacturer:
+    description: The AI service provider (e.g., openai, azure, anthropic, google).
+    required: false
+    default: openai
   fail_on_invalid_commit:
     description: Whether to fail the action if an invalid commit message is found.
     required: false
@@ -36,7 +40,7 @@ inputs:
   max_commits_scan:
     description: Maximum number of commits to process in the pull request.
     required: false
-    default: 40
+    default: 20
   # review_pull_request:
   #   description: Whether to review pull request titles and descriptions.
   #   required: false
