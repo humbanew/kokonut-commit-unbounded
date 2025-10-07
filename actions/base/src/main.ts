@@ -4,8 +4,12 @@ import { Octokit } from '@octokit/rest'
 import { KTerminal } from './KTerminal.js'
 import { KTerminalMessages } from './KTerminalMessages.js'
 import { KExceptions } from './KExceptions.js'
+import { KAgentsDictionary } from './KAgentsDictionary.js'
+import { KAgents } from './KAgents.js'
 
 const kamblerLibrarys = Object.freeze({
+    agents: KAgents,
+    agentsDictionary: KAgentsDictionary,
     exceptions: KExceptions,
     terminal: KTerminal,
     terminalMessages: KTerminalMessages
