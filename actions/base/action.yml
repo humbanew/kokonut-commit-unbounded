@@ -21,182 +21,195 @@ inputs:
     description: The AI model to use (e.g., gpt-4, claude-2, gemini-1.5).
     required: false
     default: gpt-4
-  agent_api_base_url:
-    description: Base URL for the AI API (e.g., for Azure OpenAI).
-    required: false
-    default: ''
-  agent_api_version:
-    description: API version for the AI service (if applicable).
-    required: false
-    default: ''
-  agent_api_max_retries:
-    description: Maximum number of retries for AI requests.
-    required: false
-    default: 3
-  agent_api_retry_delay:
-    description: Delay (in seconds) between retries for AI requests.
-    required: false
-    default: 2
-  agent_review_threshold:
-    description: Confidence threshold for accepting AI suggestions (0-1).
-    required: false
-    default: 0.7
-  agent_max_suggestions:
-    description: Maximum number of suggestions to consider from the AI.
-    required: false
-    default: 3
-  agent_timeout:
-    description: Timeout (in seconds) for AI requests.
-    required: false
-    default: 30
-  commit_message_pattern:
-    description: Regex pattern that commit messages should follow.
-    required: false
-    default: '^(feat|fix|docs|style|refactor|perf|test|chore)(\([\w\-]+\))?: .{1,3000}$'
-  commit_message_hint:
-    description: Hint message to display when a commit message does not match the pattern.
-    required: false
-    default: 'Commit message should follow Conventional Commits format, e.g., "feat(scope): short description".'
   fail_on_invalid_commit:
     description: Whether to fail the action if an invalid commit message is found.
     required: false
     default: true
-  review_pull_request:
-    description: Whether to review pull request titles and descriptions.
-    required: false
-    default: true
-  review_commits:
-    description: Whether to review individual commit messages in the pull request.
-    required: false
-    default: true
-  review_drafts:
-    description: Whether to review draft pull requests.
+  auto_update_commit_msgs:
+    description: Whether to automatically update all commit messages. When false, push pr with suggestions.
     required: false
     default: false
-  comment_on_pr:
-    description: Whether to post a comment on the pull request with suggestions.
-    required: false
-    default: true
-  comment_header:
-    description: Header text for the comment posted on the pull request.
-    required: false
-    default: '### Commit Message Review Suggestions'
-  comment_footer:
-    description: Footer text for the comment posted on the pull request.
-    required: false
-    default: '_Powered by Humbanew Kambler_'
-  automerge:
-    description: Whether to automatically merge the pull request if all commit messages are valid.
+  only_enhance_commits:
+    description: Whether to only enhance commits that are already valid.
     required: false
     default: false
-  automerge_method:
-    description: Method to use for automerging (merge, squash, rebase).
+  max_commits_scan:
+    description: Maximum number of commits to process in the pull request.
     required: false
-    default: squash
-  automerge_commit_title:
-    description: Title for the automerge commit.
-    required: false
-    default: 'chore: automerge valid pull request'
-  automerge_commit_message:
-    description: Commit message for the automerge commit.
-    required: false
-    default: 'All commit messages have been validated and are compliant.'
-  pr_branch_protection:
-    description: Whether to enforce branch protection rules before automerging.
-    required: false
-    default: true
-  pr_review_approval_count:
-    description: Number of required approvals from reviewers before automerging.
-    required: false
-    default: 1
-  pr_review_dismiss_stale:
-    description: Whether to dismiss stale reviews when new commits are pushed.
-    required: false
-    default: true
-  pr_review_require_code_owner:
-    description: Whether to require review from code owners before automerging.
-    required: false
-    default: false
-  pr_labels:
-    description: Comma-separated list of labels to add to the pull request if issues are found
-    required: false
-    default: 'commit-message-issue'
-  pr_assignees:
-    description: Comma-separated list of GitHub usernames to assign to the pull request if issues are found
-    required: false
-    default: ''
-  pr_reviewers:
-    description: Comma-separated list of GitHub usernames to request a review from if issues are found
-    required: false
-    default: ''
-  pr_team_reviewers:
-    description: Comma-separated list of GitHub team slugs to request a review from if issues are found
-    required: false
-    default: ''
-  dry_run:
-    description: If true, the action will simulate its behavior without making any changes.
-    required: false
-    default: false
-  email_notifications:
-    description: Comma-separated list of email addresses to notify if issues are found.
-    required: false
-    default: ''
-  email_subject:
-    description: Subject line for the notification email.
-    required: false
-    default: 'Commit Message Review Issues Found'
-  email_body:
-    description: Body content for the notification email.
-    required: false
-    default: 'The commit message review has found issues that need your attention. Please check the pull request for details.'
-  log_level:
-    description: Logging level (e.g., debug, info, warning, error).
-    required: false
-    default: info
-  log_file:
-    description: Path to a log file to write logs to (if empty, logs will only go to console).
-    required: false
-    default: ''
-  timezone:
-    description: Timezone for timestamps in logs (e.g., 'UTC', 'America/New_York').
-    required: false
-    default: 'UTC'
-  slack_webhook_url:
-    description: Slack webhook URL to send notifications to if issues are found.
-    required: false
-    default: ''
-  slack_channel:
-    description: Slack channel to post notifications to (if empty, default channel for the webhook will be used).
-    required: false
-    default: ''
-  slack_username:
-    description: Username to display when posting to Slack (if empty, default username for the webhook will be used).
-    required: false
-    default: ''
-  slack_icon_emoji:
-    description: Emoji icon to use when posting to Slack (e.g., ':robot:').
-    required: false
-    default: ':robot:'
-  slack_icon_url:
-    description: URL of an icon to use when posting to Slack (overrides icon_emoji if both are set).
-    required: false
-    default: ''
-  notion_api_token:
-    description: Notion API token to send notifications to if issues are found.
-    required: false
-    default: ''
-  notion_database_id:
-    description: Notion database ID to create entries in if issues are found.
-    required: false
-    default: ''
-  notion_page_properties:
-    description: JSON string defining the properties to set on the Notion page (e.g., '{"Name": {"title": [{"text": {"content": "Issue found"}}]}}').
-    required: false
-    default: '{}'
-  notion_page_content:
-    description: JSON string defining the content blocks to add to the Notion page (e.g., '[{"object": "block", "type": "paragraph", "paragraph": {"text": [{"type": "text", "text": {"content": "Details about the issue"}}]}}]').
-    required: false
-    default: '[]'
+    default: 40
+  # review_pull_request:
+  #   description: Whether to review pull request titles and descriptions.
+  #   required: false
+  #   default: true
+  # review_commits:
+  #   description: Whether to review individual commit messages in the pull request.
+  #   required: false
+  #   default: true
+  # review_drafts:
+  #   description: Whether to review draft pull requests.
+  #   required: false
+  #   default: false
+  # comment_on_pr:
+  #   description: Whether to post a comment on the pull request with suggestions.
+  #   required: false
+  #   default: true
+  # comment_header:
+  #   description: Header text for the comment posted on the pull request.
+  #   required: false
+  #   default: '### Commit Message Review Suggestions'
+  # comment_footer:
+  #   description: Footer text for the comment posted on the pull request.
+  #   required: false
+  #   default: '_Powered by Humbanew Kambler_'
+  # automerge:
+  #   description: Whether to automatically merge the pull request if all commit messages are valid.
+  #   required: false
+  #   default: false
+  # automerge_method:
+  #   description: Method to use for automerging (merge, squash, rebase).
+  #   required: false
+  #   default: squash
+  # automerge_commit_title:
+  #   description: Title for the automerge commit.
+  #   required: false
+  #   default: 'chore: automerge valid pull request'
+  # automerge_commit_message:
+  #   description: Commit message for the automerge commit.
+  #   required: false
+  #   default: 'All commit messages have been validated and are compliant.'
+  # pr_branch_protection:
+  #   description: Whether to enforce branch protection rules before automerging.
+  #   required: false
+  #   default: true
+  # pr_review_approval_count:
+  #   description: Number of required approvals from reviewers before automerging.
+  #   required: false
+  #   default: 1
+  # pr_review_dismiss_stale:
+  #   description: Whether to dismiss stale reviews when new commits are pushed.
+  #   required: false
+  #   default: true
+  # pr_review_require_code_owner:
+  #   description: Whether to require review from code owners before automerging.
+  #   required: false
+  #   default: false
+  # pr_labels:
+  #   description: Comma-separated list of labels to add to the pull request if issues are found
+  #   required: false
+  #   default: 'commit-message-issue'
+  # pr_assignees:
+  #   description: Comma-separated list of GitHub usernames to assign to the pull request if issues are found
+  #   required: false
+  #   default: ''
+  # pr_reviewers:
+  #   description: Comma-separated list of GitHub usernames to request a review from if issues are found
+  #   required: false
+  #   default: ''
+  # pr_team_reviewers:
+  #   description: Comma-separated list of GitHub team slugs to request a review from if issues are found
+  #   required: false
+  #   default: ''
+  # dry_run:
+  #   description: If true, the action will simulate its behavior without making any changes.
+  #   required: false
+  #   default: false
+  # email_notifications:
+  #   description: Comma-separated list of email addresses to notify if issues are found.
+  #   required: false
+  #   default: ''
+  # email_subject:
+  #   description: Subject line for the notification email.
+  #   required: false
+  #   default: 'Commit Message Review Issues Found'
+  # email_body:
+  #   description: Body content for the notification email.
+  #   required: false
+  #   default: 'The commit message review has found issues that need your attention. Please check the pull request for details.'
+  # log_level:
+  #   description: Logging level (e.g., debug, info, warning, error).
+  #   required: false
+  #   default: info
+  # log_file:
+  #   description: Path to a log file to write logs to (if empty, logs will only go to console).
+  #   required: false
+  #   default: ''
+  # timezone:
+  #   description: Timezone for timestamps in logs (e.g., 'UTC', 'America/New_York').
+  #   required: false
+  #   default: 'UTC'
+  # slack_webhook_url:
+  #   description: Slack webhook URL to send notifications to if issues are found.
+  #   required: false
+  #   default: ''
+  # slack_channel:
+  #   description: Slack channel to post notifications to (if empty, default channel for the webhook will be used).
+  #   required: false
+  #   default: ''
+  # slack_username:
+  #   description: Username to display when posting to Slack (if empty, default username for the webhook will be used).
+  #   required: false
+  #   default: ''
+  # slack_icon_emoji:
+  #   description: Emoji icon to use when posting to Slack (e.g., ':robot:').
+  #   required: false
+  #   default: ':robot:'
+  # slack_icon_url:
+  #   description: URL of an icon to use when posting to Slack (overrides icon_emoji if both are set).
+  #   required: false
+  #   default: ''
+  # notion_api_token:
+  #   description: Notion API token to send notifications to if issues are found.
+  #   required: false
+  #   default: ''
+  # notion_database_id:
+  #   description: Notion database ID to create entries in if issues are found.
+  #   required: false
+  #   default: ''
+  # notion_page_properties:
+  #   description: JSON string defining the properties to set on the Notion page (e.g., '{"Name": {"title": [{"text": {"content": "Issue found"}}]}}').
+  #   required: false
+  #   default: '{}'
+  # notion_page_content:
+  #   description: JSON string defining the content blocks to add to the Notion page (e.g., '[{"object": "block", "type": "paragraph", "paragraph": {"text": [{"type": "text", "text": {"content": "Details about the issue"}}]}}]').
+  #   required: false
+  #   default: '[]'
+  # discord_webhook_url:
+  #   description: Discord webhook URL to send notifications to if issues are found.
+  #   required: false
+  #   default: ''
+  # discord_username:
+  #   description: Username to display when posting to Discord (if empty, default username for the webhook will be used).
+  #   required: false
+  #   default: ''
+  # discord_avatar_url:
+  #   description: URL of an avatar to use when posting to Discord.
+  #   required: false
+  #   default: ''
+  # discord_content:
+  #   description: Content to send in the Discord message.
+  #   required: false
+  #   default: 'The commit message review has found issues that need your attention. Please check the pull request for details.'
+  # discord_tts:
+  #   description: Whether the Discord message should be sent as a text-to-speech message.
+  #   required: false
+  #   default: false
+  # discord_embeds:
+  #   description: JSON string defining embeds to include in the Discord message (e.g., '[{"title": "Issue found", "description": "Details about the issue"}]').
+  #   required: false
+  #   default: '[]'
+  # discord_thread_id:
+  #   description: ID of the Discord thread to post the message in (if empty, message will be posted in the main channel).
+  #   required: false
+  #   default: ''
+  # discord_message_id:
+  #   description: ID of the Discord message to reply to (if empty, message will be posted as a new message).
+  #   required: false
+  #   default: ''
+  # discord_message_id:
+  #   description: ID of the Discord message to reply to (if empty, message will be posted as a new message).
+  #   required: false
+  #   default: ''
+
 
 # Define your outputs here.
 outputs:
