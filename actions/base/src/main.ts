@@ -19,7 +19,7 @@ const kamblerInputs = Object.freeze({
     failOnInvalidCommit: Boolean(core.getInput('fail_on_invalid_commit')),
     autoUpdateCommitMsgs: Boolean(core.getInput('auto_update_commit_msgs')),
     onlyEnhanceCommits: Boolean(core.getInput('only_enhance_commits')),
-    maxCommitsScan: Number(core.getInput('max_commits_scan')),
+    maxCommitsScan: Number(core.getInput('max_commits_scan'))
 })
 
 /**
