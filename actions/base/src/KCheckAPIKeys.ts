@@ -1,4 +1,4 @@
-export class KAgents {
+export class KCheckAPIKeys {
 
     public constructor() {}
 

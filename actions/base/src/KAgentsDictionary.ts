@@ -1,6 +1,6 @@
 export class KAgentsDictionary {
     
-    constructor() {
+    public constructor() {
         console.log('KAgentsDictionary initialized.');
     }
 
