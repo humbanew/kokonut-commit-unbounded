@@ -11,13 +11,13 @@ export class KAgents {
         this.hfToken = token;
     }
 
-    public async agent() {
+    public async agent(commitMsg: string): Promise<void> {
         const client = new InferenceClient(this.hfToken);
         const response = await client.chatCompletion({
             model: "gpt-4o-mini",
             messages: [
                 { role: "system", content: "You are a helpful assistant that enchance a commit messages." },
-                { role: "user", content: "Hello world" }
+                { role: "user", content: commitMsg }
             ],
             max_tokens: 628
         });
