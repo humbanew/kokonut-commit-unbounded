@@ -17,7 +17,6 @@ const kamblerInputs = Object.freeze({
     githubToken: String(core.getInput('github_token')),
     agentToken: String(core.getInput('agent_token')),
     agentModel: String(core.getInput('agent_model')),
-    agentOrigin: String(core.getInput('agent_origin')),
     failOnInvalidCommit: Boolean(core.getInput('fail_on_invalid_commit')),
     autoUpdateCommitMsgs: Boolean(core.getInput('auto_update_commit_msgs')),
     onlyEnhanceCommits: Boolean(core.getInput('only_enhance_commits')),

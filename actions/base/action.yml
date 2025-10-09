@@ -14,17 +14,13 @@ inputs:
     required: true
     default: ${{ github.token }}
   agent_token:
-    description: Token for the AI agent (e.g., OpenAI, Azure OpenAI).
+    description: Token for the Hugging Face API.
     required: true
     default: ''
   agent_model:
-    description: The AI model to use (e.g., gpt-4, claude-2, gemini-1.5).
+    description: The AI model to use (list of 55 models).
     required: false
     default: gpt-4
-  agent_origin:
-    description: The AI service provider (e.g., openai, azure, anthropic, google).
-    required: false
-    default: openai
   fail_on_invalid_commit:
     description: Whether to fail the action if an invalid commit message is found.
     required: false
