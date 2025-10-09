@@ -1,15 +1,13 @@
 import * as core from '@actions/core'
 import * as github from '@actions/github'
 import { Octokit } from '@octokit/rest'
+import { KAgents } from './KAgents.js'
 import { KTerminal } from './KTerminal.js'
 import { KTerminalMessages } from './KTerminalMessages.js'
 import { KExceptions } from './KExceptions.js'
-import { KAgentsDictionary } from './KAgentsDictionary.js'
-import { KAgents } from './KAgents.js'
 
 const kamblerLibrarys = Object.freeze({
     agents: KAgents,
-    agentsDictionary: KAgentsDictionary,
     exceptions: KExceptions,
     terminal: KTerminal,
     terminalMessages: KTerminalMessages
@@ -116,7 +114,7 @@ export async function run(): Promise<void> {
         if (kamblerInputs.autoUpdateCommitMsgs) {
             core.info(
                 kamblerLibrarys.terminalMessages.prototype.information(
-                    'Auto update of commit messages is enabled, but this feature is not yet implemented.'
+                    'Auto update the commits.'
                 )
             )
         }
