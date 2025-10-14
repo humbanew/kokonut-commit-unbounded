@@ -64,7 +64,7 @@ export async function run(): Promise<void> {
                 repo: github.context.repo.repo,
                 ref: commit.sha
             });
-            const modifiedFiles = commitData.files?.map(file => file.filename) || [];
+            const modifiedFiles = commitData.files?.map((file:any) => file.filename) || [];
             commitModificadoArquivos.push(`Commit: ${commit.commit.message}\nModified Files: ${modifiedFiles.join(', ')}`);
         }
         console.log('Commit Messages:\n', listaCommits.join('\n\n'));
