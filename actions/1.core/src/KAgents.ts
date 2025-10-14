@@ -1,27 +1,16 @@
-import { InferenceClient } from "@huggingface/inference";
+interface Dictionary {
+    [key: string]: [string];
+}
 
 export class KAgents {
+    protected artificialIntelligenceServiceAPIKey: string = '';
+    protected artificialIntelligenceServiceManufacturer: string = 'openai';
+    protected artificialIntelligenceServiceModel: string = 'gpt-3.5-turbo';
+    protected availableAndAcceptedModels: Dictionary = {};
 
-    private hfToken: string;
-
-    public constructor(token: string) {
-        if (!token) {
-            throw new Error('Hugging Face token is required.');
-        }
-        this.hfToken = token;
+    constructor(aisAPIKey: string, aisManufacturer: string, aisModel: string) {
+        this.artificialIntelligenceServiceAPIKey = aisAPIKey;
+        this.artificialIntelligenceServiceManufacturer = aisManufacturer;
+        this.artificialIntelligenceServiceModel = aisModel;
     }
-
-    public async agent(commitMsg: string): Promise<void> {
-        const client = new InferenceClient(this.hfToken);
-        const response = await client.chatCompletion({
-            model: "gpt-4o-mini",
-            messages: [
-                { role: "system", content: "You are a helpful assistant that enchance a commit messages." },
-                { role: "user", content: commitMsg }
-            ],
-            max_tokens: 628
-        });
-        console.log(response.choices[0].message);
-    }
-
 }

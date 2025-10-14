@@ -14,9 +14,13 @@ inputs:
     required: true
     default: ${{ github.token }}
   agent_token:
-    description: Token for the Hugging Face API.
+    description: Token for the Artificial Intelligence Service API.
     required: true
     default: ''
+  agent_manufacturer:
+    description: The AI service provider (openai, anthropic, cohere, etc.).
+    required: false
+    default: openai
   agent_model:
     description: The AI model to use (list of 55 models).
     required: false
