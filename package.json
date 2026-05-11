@@ -41,7 +41,7 @@
     "dependencies": {
         "@actions/core": "^1.11.1",
         "@actions/github": "^6.0.1",
-        "@huggingface/inference": "^4.11.0",
+        "@huggingface/inference": "^4.13.15",
         "octokit": "^5.0.3"
     },
     "devDependencies": {
