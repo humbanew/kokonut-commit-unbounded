@@ -5,7 +5,7 @@ author: humbanew
 # Add your action's branding here. This will appear on the GitHub Marketplace.
 branding:
     icon: aperture
-    color: green
+    color: brown
 
 # Define your inputs here.
 inputs:
