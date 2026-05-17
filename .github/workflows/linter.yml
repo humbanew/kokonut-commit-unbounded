@@ -48,6 +48,21 @@ jobs:
                   DEFAULT_BRANCH: main
                   FILTER_REGEX_EXCLUDE: dist/**/*
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    lint-action:
+        name: Lint GitHub Action Metadata
+        runs-on: ubuntu-latest
+
+        steps:
+            - name: Checkout
+              id: checkout
+              uses: actions/checkout@v5
+
+            - name: Lint Action Metadata
+              id: actionlint
+              uses: rhysd/actionlint-action@v1
+              with:
+                  fail-on-error: true
                   LINTER_RULES_PATH: .
                   VALIDATE_ALL_CODEBASE: true
                   VALIDATE_GITHUB_ACTIONS_ZIZMOR: false

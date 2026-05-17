@@ -22,7 +22,8 @@ if (args.includes('--help') || args.includes('-h')) {
         '  provider (0-6), temperature (0-2), topP (0-1), topK (0-100)\n' +
         '  maxTokens (1-65536), frequencyPenalty (-2 to 2)\n' +
         '  presencePenalty (-2 to 2), stopSequences (comma-separated)\n' +
-        '  prefix (string), includeEmojis (true|false)\n');
+        '  prefix (string), includeEmojis (true|false)\n' +
+        '  commitPreset (string), dryRun (true|false), fallbackProviders (comma-separated indexes)\n');
     process.exit(0);
 }
 if (args.length === 0) {
@@ -37,7 +38,8 @@ if (args.length === 0) {
         '  provider (0-6), temperature (0-2), topP (0-1), topK (0-100)\n' +
         '  maxTokens (1-65536), frequencyPenalty (-2 to 2)\n' +
         '  presencePenalty (-2 to 2), stopSequences (comma-separated)\n' +
-        '  prefix (string), includeEmojis (true|false)\n');
+        '  prefix (string), includeEmojis (true|false)\n' +
+        '  commitPreset (string), dryRun (true|false), fallbackProviders (comma-separated indexes)\n');
     process.exit(0);
 }
 const HOME = os.homedir();
@@ -98,7 +100,9 @@ async function promptForMissingApiKey() {
         try {
             rl.close();
         }
-        catch (e) { }
+        catch {
+            /* ignore */
+        }
     }
 }
 function writeConfig(key, value, globalFlag) {
@@ -178,7 +182,9 @@ if (cmd === 'setup') {
             try {
                 rl.close();
             }
-            catch (e) { }
+            catch {
+                /* ignore */
+            }
         }
         process.exit(0);
     }
@@ -321,8 +327,8 @@ if (cmd === 'hook') {
                     globalHooksDir
                 ]);
             }
-            catch (e) {
-                // ignore
+            catch {
+                /* ignore */
             }
             console.log('Installed global hook at', targetGlobalHook);
             process.exit(0);
@@ -415,8 +421,8 @@ if (cmd === 'hook') {
                         ]);
                     }
                 }
-                catch (e) {
-                    // ignore
+                catch {
+                    /* ignore */
                 }
                 process.exit(0);
             }
@@ -465,8 +471,8 @@ if (cmd === 'hook') {
                         ]);
                     }
                 }
-                catch (e) {
-                    // ignore
+                catch {
+                    /* ignore */
                 }
                 process.exit(0);
             }

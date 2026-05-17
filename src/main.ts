@@ -2,13 +2,204 @@ import * as core from '@actions/core'
 import { Octokit } from 'octokit'
 import fs from 'fs'
 import path from 'path'
-import { AIProvider, createAIProvider } from './providers.js'
+import { AIProvider, createAIProvider } from './providers'
+import { mergeWithDefaults } from './config'
+
+const PROVIDER_NAMES = [
+    'Google Gemini',
+    'OpenAI ChatGPT',
+    'Anthropic Claude',
+    'Mistral Le Chat',
+    'Deepseek',
+    'Grok',
+    'Hugging Face'
+] as const
+
+type ConfidenceLabel = 'high' | 'medium' | 'low'
+
+interface CommitSuggestion {
+    sha: string
+    oldMessage: string
+    newMessage: string
+    confidence: number
+    confidenceLabel: ConfidenceLabel
+    providerName: string
+}
+
+interface RuntimeConfig {
+    provider?: number
+    fallbackProviders?: number[]
+    prefix?: string
+    includeEmojis?: boolean
+    commitPreset?: string
+    dryRun?: boolean
+}
+
+function readWorkspaceConfig(): RuntimeConfig {
+    const workspace = process.env.GITHUB_WORKSPACE || process.cwd()
+    const configPath = path.join(workspace, '.kokonutrc')
+
+    if (!fs.existsSync(configPath)) {
+        return {}
+    }
+
+    try {
+        const rawConfig = JSON.parse(fs.readFileSync(configPath, 'utf8'))
+        void mergeWithDefaults(rawConfig)
+
+        const normalizeBoolean = (value: unknown): boolean | undefined => {
+            if (typeof value === 'boolean') return value
+            if (typeof value === 'string' && value.trim() !== '') {
+                return /^(true|1|yes)$/i.test(value.trim())
+            }
+            return undefined
+        }
+
+        const fallbackProviders =
+            typeof rawConfig.fallbackProviders === 'string'
+                ? rawConfig.fallbackProviders
+                      .split(',')
+                      .map((value: string) => Number.parseInt(value.trim(), 10))
+                      .filter((value: number) => Number.isInteger(value))
+                : Array.isArray(rawConfig.fallbackProviders)
+                  ? rawConfig.fallbackProviders
+                  : undefined
+
+        return {
+            provider: parseProviderIndex(rawConfig.provider),
+            fallbackProviders,
+            prefix:
+                typeof rawConfig.prefix === 'string'
+                    ? rawConfig.prefix
+                    : undefined,
+            includeEmojis: normalizeBoolean(rawConfig.includeEmojis),
+            commitPreset:
+                typeof rawConfig.commitPreset === 'string'
+                    ? rawConfig.commitPreset
+                    : undefined,
+            dryRun: normalizeBoolean(rawConfig.dryRun)
+        }
+    } catch (error) {
+        core.warning(
+            `Unable to read workspace config: ${error instanceof Error ? error.message : String(error)}`
+        )
+        return {}
+    }
+}
+
+function parseProviderIndex(value: unknown): number | undefined {
+    if (typeof value === 'number' && Number.isInteger(value)) {
+        return value
+    }
+
+    if (typeof value === 'string' && value.trim() !== '') {
+        const normalized = value.trim().toLowerCase()
+        const aliasMap: Record<string, number> = {
+            gemini: 0,
+            openai: 1,
+            claude: 2,
+            anthropic: 2,
+            mistral: 3,
+            deepseek: 4,
+            grok: 5,
+            huggingface: 6,
+            'hugging face': 6
+        }
+
+        if (normalized in aliasMap) {
+            return aliasMap[normalized]
+        }
+
+        const parsed = Number.parseInt(normalized, 10)
+        if (Number.isInteger(parsed)) {
+            return parsed
+        }
+    }
+
+    return undefined
+}
+
+function readBooleanPreference(inputName: string, fallback?: boolean): boolean {
+    const rawInput = core.getInput(inputName)
+    if (rawInput !== '') {
+        const val = rawInput.trim()
+        if (/^(true|1|yes)$/i.test(val)) return true
+        if (/^(false|0|no)$/i.test(val)) return false
+        // If the input is present but not a recognizable boolean, treat it
+        // as not provided so other sources (fallback/core.getBooleanInput)
+        // can determine the value.
+    }
+
+    if (fallback !== undefined) {
+        return fallback
+    }
+
+    return core.getBooleanInput(inputName)
+}
+
+function resolveSelectedProviderIndex(
+    providers: boolean[],
+    fallbackProviderIndex?: number
+): number {
+    const selectedIndex = providers.findIndex((p) => p)
+
+    if (selectedIndex !== -1) {
+        return selectedIndex
+    }
+
+    if (
+        fallbackProviderIndex !== undefined &&
+        fallbackProviderIndex >= 0 &&
+        fallbackProviderIndex < PROVIDER_NAMES.length
+    ) {
+        return fallbackProviderIndex
+    }
+
+    throw new Error('No AI provider selected')
+}
+
+function estimateConfidence(
+    diff: string,
+    originalMessage: string
+): {
+    confidence: number
+    confidenceLabel: ConfidenceLabel
+} {
+    const lineCount = diff.split('\n').length
+    const lengthScore = Math.min(diff.length / 2500, 0.35)
+    const complexityScore = Math.min(lineCount / 60, 0.25)
+    const messageScore = originalMessage.length > 60 ? -0.05 : 0.05
+    const confidence = Math.max(
+        0.15,
+        Math.min(0.95, 0.45 + lengthScore + complexityScore + messageScore)
+    )
+
+    const confidenceLabel: ConfidenceLabel =
+        confidence >= 0.8 ? 'high' : confidence >= 0.6 ? 'medium' : 'low'
+
+    return { confidence, confidenceLabel }
+}
+
+function uniqueProviderCandidates(
+    primaryIndex: number,
+    fallbackProviders: number[]
+): number[] {
+    return [primaryIndex, ...fallbackProviders].filter(
+        (providerIndex, position, providerIndices) =>
+            providerIndices.indexOf(providerIndex) === position &&
+            providerIndex >= 0 &&
+            providerIndex < PROVIDER_NAMES.length
+    )
+}
 
 /**
  * Validates that exactly one AI provider is selected
  * @returns The name of the selected provider
  */
-function validateSingleProvider(providers: boolean[]): string {
+function validateSingleProvider(
+    providers: boolean[],
+    fallbackProviderIndex?: number
+): string {
     const selectedCount = providers.filter((p) => p).length
 
     if (selectedCount === 0) {
@@ -23,15 +214,17 @@ function validateSingleProvider(providers: boolean[]): string {
         throw new Error('Multiple AI providers cannot be used simultaneously')
     }
 
-    const providers_names = [
-        'Google Gemini',
-        'OpenAI ChatGPT',
-        'Anthropic Claude',
-        'Mistral Le Chat'
-    ]
+    if (
+        selectedCount === 0 &&
+        fallbackProviderIndex !== undefined &&
+        fallbackProviderIndex >= 0 &&
+        fallbackProviderIndex < PROVIDER_NAMES.length
+    ) {
+        return PROVIDER_NAMES[fallbackProviderIndex]
+    }
 
     const selectedIndex = providers.findIndex((p) => p)
-    return providers_names[selectedIndex]
+    return PROVIDER_NAMES[selectedIndex]
 }
 
 /**
@@ -125,26 +318,50 @@ async function createCommitSuggestionsComment(
     owner: string,
     repo: string,
     pullNumber: number,
-    suggestions: Array<{ sha: string; oldMessage: string; newMessage: string }>
+    suggestions: CommitSuggestion[]
 ): Promise<string | undefined> {
     if (suggestions.length === 0) {
         return undefined
     }
 
-    const suggestionTable = suggestions
-        .map(
-            (s) =>
-                `| ${s.sha.substring(0, 7)} | ${s.oldMessage} | ${s.newMessage} |`
-        )
-        .join('\n')
+    const groupedSuggestions = suggestions.reduce(
+        (groups, suggestion) => {
+            groups[suggestion.confidenceLabel].push(suggestion)
+            return groups
+        },
+        {
+            high: [] as CommitSuggestion[],
+            medium: [] as CommitSuggestion[],
+            low: [] as CommitSuggestion[]
+        }
+    )
+
+    const renderSuggestionTable = (group: CommitSuggestion[]) =>
+        group
+            .map(
+                (suggestion) =>
+                    `| ${suggestion.sha.substring(0, 7)} | ${suggestion.providerName} | ${suggestion.confidenceLabel} | ${suggestion.oldMessage} | ${suggestion.newMessage} |`
+            )
+            .join('\n')
 
     const body = `## 🤖 Kokonut Commit - Commit Message Suggestions
 
 I've analyzed your commits and generated improved messages following Conventional Commits:
 
-| Commit | Original | Suggested |
-|--------|----------|-----------|
-${suggestionTable}
+| Commit | Provider | Confidence | Original | Suggested |
+|--------|----------|------------|----------|-----------|
+
+### High Confidence
+
+${renderSuggestionTable(groupedSuggestions.high) || '_No high confidence suggestions_'}
+
+### Medium Confidence
+
+${renderSuggestionTable(groupedSuggestions.medium) || '_No medium confidence suggestions_'}
+
+### Low Confidence
+
+${renderSuggestionTable(groupedSuggestions.low) || '_No low confidence suggestions_'}
 
 **How to apply these changes:**
 - Use \`git commit --amend --message "new message"\` to update individual commits
@@ -172,14 +389,18 @@ async function processCommits(
     repo: string,
     pullNumber: number,
     aiProvider: AIProvider,
+    aiTokenApi: string,
+    providerIndex: number,
+    fallbackProviders: number[],
     autoRename: boolean,
     includeEmojis: boolean,
     commitPrefix: string,
     topK: number,
-    topP: number
+    topP: number,
+    commitPreset: string
 ): Promise<{
     nonCompliant: Array<{ sha: string; message: string }>
-    renamed: Array<{ sha: string; oldMessage: string; newMessage: string }>
+    renamed: CommitSuggestion[]
     prCommentUrl?: string
 }> {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -190,11 +411,7 @@ async function processCommits(
     })
 
     const nonCompliant: Array<{ sha: string; message: string }> = []
-    const renamed: Array<{
-        sha: string
-        oldMessage: string
-        newMessage: string
-    }> = []
+    const renamed: CommitSuggestion[] = []
 
     for (const commit of commits) {
         const sha = commit.sha
@@ -206,14 +423,50 @@ async function processCommits(
             if (autoRename) {
                 try {
                     const diff = await getCommitDiff(octokit, owner, repo, sha)
-                    let improvedMessage =
-                        await aiProvider.generateCommitMessage(
-                            diff,
-                            originalMessage,
-                            includeEmojis,
-                            topK,
-                            topP
+                    const providerCandidates = uniqueProviderCandidates(
+                        providerIndex,
+                        fallbackProviders
+                    )
+
+                    let improvedMessage = ''
+                    let providerName = aiProvider.name
+
+                    for (const candidateIndex of providerCandidates) {
+                        const candidateProvider = createAIProvider(
+                            candidateIndex,
+                            aiTokenApi,
+                            commitPreset
                         )
+
+                        try {
+                            improvedMessage =
+                                await candidateProvider.generateCommitMessage(
+                                    diff,
+                                    originalMessage,
+                                    includeEmojis,
+                                    topK,
+                                    topP,
+                                    commitPreset
+                                )
+                            providerName = candidateProvider.name
+                            if (candidateIndex !== providerIndex) {
+                                core.warning(
+                                    `Provider fallback used for ${sha.substring(0, 7)}: ${providerName}`
+                                )
+                            }
+                            break
+                        } catch (error) {
+                            providerName = candidateProvider.name
+                            if (candidateIndex === providerCandidates.at(-1)) {
+                                throw error
+                            }
+                            core.warning(
+                                `Provider ${candidateProvider.name} failed for ${sha.substring(0, 7)}; trying fallback provider.`
+                            )
+                        }
+                    }
+
+                    const confidence = estimateConfidence(diff, originalMessage)
 
                     if (commitPrefix) {
                         improvedMessage = `${commitPrefix} ${improvedMessage}`
@@ -222,7 +475,10 @@ async function processCommits(
                     renamed.push({
                         sha,
                         oldMessage: originalMessage,
-                        newMessage: improvedMessage
+                        newMessage: improvedMessage,
+                        confidence: confidence.confidence,
+                        confidenceLabel: confidence.confidenceLabel,
+                        providerName
                     })
 
                     core.info(
@@ -246,18 +502,50 @@ async function processCommits(
  * @returns Resolves when the action is complete.
  */
 export async function run(): Promise<void> {
-    const isGoogleGemini = core.getBooleanInput('isGoogleGemini')
-    const isOpenAIChatGPT = core.getBooleanInput('isOpenAIChatGPT')
-    const isAnthropicClaude = core.getBooleanInput('isAnthropicClaude')
-    const isMistralLeChat = core.getBooleanInput('isMistralLeChat')
+    const runtimeConfig = readWorkspaceConfig()
+    const providerFallback = (index: number): boolean | undefined =>
+        runtimeConfig.provider !== undefined
+            ? runtimeConfig.provider === index
+            : undefined
+
+    const isGoogleGemini = readBooleanPreference(
+        'isGoogleGemini',
+        providerFallback(0)
+    )
+    const isOpenAIChatGPT = readBooleanPreference(
+        'isOpenAIChatGPT',
+        providerFallback(1)
+    )
+    const isAnthropicClaude = readBooleanPreference(
+        'isAnthropicClaude',
+        providerFallback(2)
+    )
+    const isMistralLeChat = readBooleanPreference(
+        'isMistralLeChat',
+        providerFallback(3)
+    )
+    const isDeepseek = readBooleanPreference('isDeepseek', providerFallback(4))
+    const isGrok = readBooleanPreference('isGrok', providerFallback(5))
+    const isHuggingFace = readBooleanPreference(
+        'isHuggingFace',
+        providerFallback(6)
+    )
     const aiTokenApi = core.getInput('aiTokenApi')
     const githubTokenApi = core.getInput('githubTokenApi')
-    const autoRenameCommits = core.getBooleanInput('autoRenameCommits')
-    const includeEmojis = core.getBooleanInput('includeEmojis')
-    const commitPrefix = core.getInput('commitPrefix')
+    const autoRenameCommits = readBooleanPreference('autoRenameCommits', false)
+    const includeEmojis = readBooleanPreference(
+        'includeEmojis',
+        runtimeConfig.includeEmojis
+    )
+    const dryRun = readBooleanPreference('dryRun', runtimeConfig.dryRun)
+    const commitPrefix =
+        core.getInput('commitPrefix') || runtimeConfig.prefix || ''
+    const commitPreset =
+        core.getInput('commitPreset') || runtimeConfig.commitPreset || 'default'
     const topKInput = core.getInput('topK')
     const topPInput = core.getInput('topP')
     const renameMode = core.getInput('renameMode')
+    const fallbackProviders = runtimeConfig.fallbackProviders || []
 
     const topK = topKInput ? parseInt(topKInput, 10) : 20
     const topP = topPInput ? parseFloat(topPInput) : 0.9
@@ -266,12 +554,19 @@ export async function run(): Promise<void> {
         isGoogleGemini,
         isOpenAIChatGPT,
         isAnthropicClaude,
-        isMistralLeChat
+        isMistralLeChat,
+        isDeepseek,
+        isGrok,
+        isHuggingFace
     ]
 
     try {
         // Validate that exactly one provider is selected
-        const selectedProvider = validateSingleProvider(providers)
+        const fallbackProviderIndex = parseProviderIndex(runtimeConfig.provider)
+        const selectedProvider = validateSingleProvider(
+            providers,
+            fallbackProviderIndex
+        )
         core.info(`✓ Using ${selectedProvider} Token API Key`)
 
         // Validate tokens are not empty
@@ -296,8 +591,15 @@ export async function run(): Promise<void> {
         const [owner, repo] = GITHUB_REPOSITORY.split('/')
 
         // Create AI provider instance
-        const providerIndex = providers.findIndex((p) => p)
-        const aiProvider = createAIProvider(providerIndex, aiTokenApi)
+        const providerIndex = resolveSelectedProviderIndex(
+            providers,
+            fallbackProviderIndex
+        )
+        const aiProvider = createAIProvider(
+            providerIndex,
+            aiTokenApi,
+            commitPreset
+        )
 
         // Get pull request number from event
         let eventData: { pull_request?: { number: number } } = {}
@@ -324,11 +626,15 @@ export async function run(): Promise<void> {
                 repo,
                 pullNumber,
                 aiProvider,
+                aiTokenApi,
+                providerIndex,
+                fallbackProviders,
                 autoRenameCommits,
                 includeEmojis,
                 commitPrefix,
                 topK,
-                topP
+                topP,
+                commitPreset
             )
 
             if (result.nonCompliant.length > 0) {
@@ -361,13 +667,38 @@ export async function run(): Promise<void> {
                         result.renamed.map((r) => ({
                             sha: r.sha,
                             old: r.oldMessage,
-                            new: r.newMessage
+                            new: r.newMessage,
+                            confidence: r.confidence,
+                            confidenceLabel: r.confidenceLabel,
+                            provider: r.providerName
                         }))
                     )
                 )
 
+                core.setOutput(
+                    'confidenceSummary',
+                    JSON.stringify(
+                        result.renamed.map((commit) => ({
+                            sha: commit.sha,
+                            confidence: commit.confidence,
+                            level: commit.confidenceLabel,
+                            provider: commit.providerName
+                        }))
+                    )
+                )
+
+                if (dryRun) {
+                    core.setOutput(
+                        'previewSuggestions',
+                        JSON.stringify(result.renamed)
+                    )
+                    core.info(
+                        'Dry-run enabled: preview outputs generated only.'
+                    )
+                }
+
                 // Create PR comment if in PR mode
-                if (renameMode === 'pr') {
+                if (renameMode === 'pr' && !dryRun) {
                     const prCommentUrl = await createCommitSuggestionsComment(
                         octokit,
                         owner,
@@ -379,6 +710,8 @@ export async function run(): Promise<void> {
                         core.info(`📝 PR comment created: ${prCommentUrl}`)
                         core.setOutput('prCommentUrl', prCommentUrl)
                     }
+                } else if (dryRun) {
+                    core.info('Dry-run mode skipped PR comment creation.')
                 } else if (renameMode === 'force') {
                     core.info(
                         '⚠️ Force mode requires manual git operations. Use output messages to apply changes.'

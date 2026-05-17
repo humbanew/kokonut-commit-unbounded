@@ -5,18 +5,36 @@ export interface AIProvider {
         originalMessage: string,
         includeEmojis: boolean,
         topK: number,
-        topP: number
+        topP: number,
+        _commitPreset?: string
     ): Promise<string>
 }
 
 export function createAIProvider(
     providerIndex: number,
-    apiToken: string
+    apiToken: string,
+    commitPreset = 'default'
 ): AIProvider {
+    const presetInstructions = (() => {
+        switch (commitPreset) {
+            case 'concise':
+                return 'Prefer the shortest message that still captures the change clearly.'
+            case 'detailed':
+                return 'Include a little more context in the description while keeping the output to one Conventional Commits line.'
+            case 'strict':
+                return 'Be strict about Conventional Commits formatting and avoid creative phrasing.'
+            case 'friendly':
+                return 'Use a polished, approachable tone while staying within Conventional Commits.'
+            default:
+                return 'Optimize for a balanced, standard Conventional Commits message.'
+        }
+    })()
+
     const basePrompt = `You are an expert at writing clear, concise commit messages following Conventional Commits format.
 Given a diff and original commit message, generate an improved commit message.
 Follow the format: type(scope): description
-Types: feat, fix, docs, style, refactor, perf, test, chore, ci, revert`
+Types: feat, fix, docs, style, refactor, perf, test, chore, ci, revert
+${presetInstructions}`
 
     const DEFAULT_TIMEOUT_MS = 15000
 
@@ -51,6 +69,7 @@ Types: feat, fix, docs, style, refactor, perf, test, chore, ci, revert`
         timeout = DEFAULT_TIMEOUT_MS
     ) {
         // If AbortController isn't available in the environment (some tests/runtimes), skip timeout
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         if (typeof (global as any).AbortController === 'undefined') {
             return await fetch(url, opts)
         }
@@ -59,7 +78,7 @@ Types: feat, fix, docs, style, refactor, perf, test, chore, ci, revert`
         const id = setTimeout(() => controller.abort(), timeout)
         try {
             // Merge abort signal
-            // @ts-ignore - RequestInit may not yet include signal in some TS lib configs
+            // @ts-expect-error - RequestInit may not yet include signal in some TS lib configs
             const res = await fetch(url, { ...opts, signal: controller.signal })
             clearTimeout(id)
             return res
@@ -78,8 +97,10 @@ Types: feat, fix, docs, style, refactor, perf, test, chore, ci, revert`
                     originalMessage: string,
                     includeEmojis: boolean,
                     topK: number,
-                    topP: number
+                    topP: number,
+                    _commitPreset?: string
                 ): Promise<string> {
+                    void _commitPreset
                     const response = await fetchWithTimeout(
                         'https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=' +
                             apiToken,
@@ -128,8 +149,10 @@ Types: feat, fix, docs, style, refactor, perf, test, chore, ci, revert`
                     originalMessage: string,
                     includeEmojis: boolean,
                     topK: number,
-                    topP: number
+                    topP: number,
+                    _commitPreset?: string
                 ): Promise<string> {
+                    void _commitPreset
                     const response = await fetchWithTimeout(
                         'https://api.openai.com/v1/chat/completions',
                         {
@@ -179,8 +202,10 @@ Types: feat, fix, docs, style, refactor, perf, test, chore, ci, revert`
                     originalMessage: string,
                     includeEmojis: boolean,
                     topK: number,
-                    topP: number
+                    topP: number,
+                    _commitPreset?: string
                 ): Promise<string> {
+                    void _commitPreset
                     const response = await fetchWithTimeout(
                         'https://api.anthropic.com/v1/messages',
                         {
@@ -227,8 +252,10 @@ Types: feat, fix, docs, style, refactor, perf, test, chore, ci, revert`
                     originalMessage: string,
                     includeEmojis: boolean,
                     topK: number,
-                    topP: number
+                    topP: number,
+                    _commitPreset?: string
                 ): Promise<string> {
+                    void _commitPreset
                     const response = await fetchWithTimeout(
                         'https://api.mistral.ai/v1/chat/completions',
                         {
@@ -278,8 +305,10 @@ Types: feat, fix, docs, style, refactor, perf, test, chore, ci, revert`
                     originalMessage: string,
                     includeEmojis: boolean,
                     topK: number,
-                    topP: number
+                    topP: number,
+                    _commitPreset?: string
                 ): Promise<string> {
+                    void _commitPreset
                     const response = await fetchWithTimeout(
                         'https://api.deepseek.com/v1/chat/completions',
                         {
@@ -329,8 +358,10 @@ Types: feat, fix, docs, style, refactor, perf, test, chore, ci, revert`
                     originalMessage: string,
                     includeEmojis: boolean,
                     topK: number,
-                    topP: number
+                    topP: number,
+                    _commitPreset?: string
                 ): Promise<string> {
+                    void _commitPreset
                     const response = await fetchWithTimeout(
                         'https://api.x.ai/v1/chat/completions',
                         {
@@ -380,8 +411,10 @@ Types: feat, fix, docs, style, refactor, perf, test, chore, ci, revert`
                     originalMessage: string,
                     includeEmojis: boolean,
                     topK: number,
-                    topP: number
+                    topP: number,
+                    _commitPreset?: string
                 ): Promise<string> {
+                    void _commitPreset
                     const response = await fetchWithTimeout(
                         'https://api-inference.huggingface.co/v1/chat/completions',
                         {

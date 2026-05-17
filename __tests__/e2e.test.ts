@@ -20,11 +20,10 @@ describe('E2E: CLI + hook integration', () => {
         }
     })
 
-    test('CLI should be executable and output help', (done) => {
+    test('CLI should be executable and output help', async () => {
         const cliPath = path.join(__dirname, '..', 'dist', 'cli.cjs')
         if (!fs.existsSync(cliPath)) {
-            done(new Error('dist/cli.cjs not found. Run npm run bundle first.'))
-            return
+            throw new Error('dist/cli.cjs not found. Run npm run bundle first.')
         }
 
         // Test with --help flag
@@ -34,10 +33,9 @@ describe('E2E: CLI + hook integration', () => {
 
         expect(result.status).toBe(0)
         expect(result.stdout).toContain('Usage')
-        done()
     })
 
-    test('hook set should create hook file in git repo', (done) => {
+    test('hook set should create hook file in git repo', async () => {
         const repo = path.join(tmpDir, 'repo')
         fs.mkdirSync(repo, { recursive: true })
         spawnSync('git', ['init'], { cwd: repo })
@@ -45,8 +43,7 @@ describe('E2E: CLI + hook integration', () => {
 
         const cliPath = path.join(__dirname, '..', 'dist', 'cli.cjs')
         if (!fs.existsSync(cliPath)) {
-            done(new Error('dist/cli.cjs not found'))
-            return
+            throw new Error('dist/cli.cjs not found')
         }
 
         const result = spawnSync(process.execPath, [cliPath, 'hook', 'set'], {
@@ -60,11 +57,9 @@ describe('E2E: CLI + hook integration', () => {
         // Check if hook file exists
         const hookPath = path.join(repo, '.git', 'hooks', 'prepare-commit-msg')
         expect(fs.existsSync(hookPath)).toBe(true)
-
-        done()
     })
 
-    test('hook unset should remove hook from git repo', (done) => {
+    test('hook unset should remove hook from git repo', async () => {
         const repo = path.join(tmpDir, 'repo')
         fs.mkdirSync(repo, { recursive: true })
         spawnSync('git', ['init'], { cwd: repo })
@@ -72,8 +67,7 @@ describe('E2E: CLI + hook integration', () => {
 
         const cliPath = path.join(__dirname, '..', 'dist', 'cli.cjs')
         if (!fs.existsSync(cliPath)) {
-            done(new Error('dist/cli.cjs not found'))
-            return
+            throw new Error('dist/cli.cjs not found')
         }
 
         // First set the hook
@@ -91,18 +85,15 @@ describe('E2E: CLI + hook integration', () => {
 
         // Hook should be removed
         expect(fs.existsSync(hookPath)).toBe(false)
-
-        done()
     })
 
-    test('config set should save configuration', (done) => {
+    test('config set should save configuration', async () => {
         const isolatedHome = path.join(tmpDir, 'home')
         fs.mkdirSync(isolatedHome, { recursive: true })
 
         const cliPath = path.join(__dirname, '..', 'dist', 'cli.cjs')
         if (!fs.existsSync(cliPath)) {
-            done(new Error('dist/cli.cjs not found'))
-            return
+            throw new Error('dist/cli.cjs not found')
         }
 
         const result = spawnSync(
@@ -127,11 +118,9 @@ describe('E2E: CLI + hook integration', () => {
 
         const config = JSON.parse(fs.readFileSync(configPath, 'utf8'))
         expect(config.provider).toBe('openai')
-
-        done()
     })
 
-    test('config list should display all config', (done) => {
+    test('config list should display all config', async () => {
         const isolatedHome = path.join(tmpDir, 'home')
         fs.mkdirSync(isolatedHome, { recursive: true })
 
@@ -144,8 +133,7 @@ describe('E2E: CLI + hook integration', () => {
 
         const cliPath = path.join(__dirname, '..', 'dist', 'cli.cjs')
         if (!fs.existsSync(cliPath)) {
-            done(new Error('dist/cli.cjs not found'))
-            return
+            throw new Error('dist/cli.cjs not found')
         }
 
         const result = spawnSync(
@@ -165,15 +153,12 @@ describe('E2E: CLI + hook integration', () => {
         expect(result.status).toBe(0)
         expect(result.stdout).toContain('provider')
         expect(result.stdout).toContain('openai')
-
-        done()
     })
 
-    test('invalid command should exit with error', (done) => {
+    test('invalid command should exit with error', async () => {
         const cliPath = path.join(__dirname, '..', 'dist', 'cli.cjs')
         if (!fs.existsSync(cliPath)) {
-            done(new Error('dist/cli.cjs not found'))
-            return
+            throw new Error('dist/cli.cjs not found')
         }
 
         const result = spawnSync(
@@ -187,7 +172,5 @@ describe('E2E: CLI + hook integration', () => {
         // Invalid command should fail
         expect(result.status).not.toBe(0)
         expect(result.stdout + result.stderr).toContain('Unknown')
-
-        done()
     })
 })

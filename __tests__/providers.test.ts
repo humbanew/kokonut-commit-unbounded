@@ -23,7 +23,7 @@ describe('providers.ts', () => {
             })
         })
 
-        const { createAIProvider } = await import('../src/providers.js')
+        const { createAIProvider } = await import('../src/providers')
         const provider = createAIProvider(0, 'api-key')
         const msg = await provider.generateCommitMessage(
             'diff',
@@ -54,7 +54,7 @@ describe('providers.ts', () => {
             })
         })
 
-        const { createAIProvider } = await import('../src/providers.js')
+        const { createAIProvider } = await import('../src/providers')
         const provider = createAIProvider(1, 'api-key')
         const msg = await provider.generateCommitMessage(
             'diff',
@@ -85,7 +85,7 @@ describe('providers.ts', () => {
             })
         })
 
-        const { createAIProvider } = await import('../src/providers.js')
+        const { createAIProvider } = await import('../src/providers')
         const provider = createAIProvider(2, 'api-key')
         const msg = await provider.generateCommitMessage(
             'diff',
@@ -116,7 +116,7 @@ describe('providers.ts', () => {
             })
         })
 
-        const { createAIProvider } = await import('../src/providers.js')
+        const { createAIProvider } = await import('../src/providers')
         const provider = createAIProvider(3, 'api-key')
         const msg = await provider.generateCommitMessage(
             'diff',
@@ -145,7 +145,7 @@ describe('providers.ts', () => {
             statusText: 'Unauthorized'
         })
 
-        const { createAIProvider } = await import('../src/providers.js')
+        const { createAIProvider } = await import('../src/providers')
         const provider = createAIProvider(0, 'invalid-key')
 
         await expect(
@@ -157,7 +157,7 @@ describe('providers.ts', () => {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         ;(global.fetch as any).mockRejectedValue(new Error('Network timeout'))
 
-        const { createAIProvider } = await import('../src/providers.js')
+        const { createAIProvider } = await import('../src/providers')
         const provider = createAIProvider(1, 'api-key')
 
         await expect(
@@ -184,7 +184,7 @@ describe('providers.ts', () => {
             })
         })
 
-        const { createAIProvider } = await import('../src/providers.js')
+        const { createAIProvider } = await import('../src/providers')
         const provider = createAIProvider(0, 'api-key')
         const msg = await provider.generateCommitMessage(
             'diff',
@@ -198,7 +198,7 @@ describe('providers.ts', () => {
     })
 
     it('should throw error for invalid provider index', async () => {
-        const { createAIProvider } = await import('../src/providers.js')
+        const { createAIProvider } = await import('../src/providers')
 
         expect(() => {
             createAIProvider(99, 'api-key')
@@ -234,7 +234,7 @@ describe('providers.ts', () => {
                 })
             })
 
-            const { createAIProvider } = await import('../src/providers.js')
+            const { createAIProvider } = await import('../src/providers')
             const provider = createAIProvider(0, 'api-key')
             const msg = await provider.generateCommitMessage(
                 'diff',
@@ -259,8 +259,8 @@ describe('providers.ts', () => {
         // Test Gemini
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         ;(global.fetch as any).mockResolvedValue(mockResponse)
-        let { createAIProvider } = await import('../src/providers.js')
-        let gemini = createAIProvider(0, 'key123')
+        let { createAIProvider } = await import('../src/providers')
+        const gemini = createAIProvider(0, 'key123')
         await gemini.generateCommitMessage('diff', 'orig', false, 10, 0.9)
         expect((global.fetch as jest.Mock).mock.calls[0][0]).toContain(
             'generativelanguage.googleapis.com'
@@ -276,8 +276,8 @@ describe('providers.ts', () => {
         })
 
         // Test OpenAI
-        ;({ createAIProvider } = await import('../src/providers.js'))
-        let openai = createAIProvider(1, 'key123')
+        ;({ createAIProvider } = await import('../src/providers'))
+        const openai = createAIProvider(1, 'key123')
         await openai.generateCommitMessage('diff', 'orig', false, 10, 0.9)
         expect((global.fetch as jest.Mock).mock.calls[0][0]).toBe(
             'https://api.openai.com/v1/chat/completions'
@@ -293,8 +293,8 @@ describe('providers.ts', () => {
         })
 
         // Test Claude
-        ;({ createAIProvider } = await import('../src/providers.js'))
-        let claude = createAIProvider(2, 'key123')
+        ;({ createAIProvider } = await import('../src/providers'))
+        const claude = createAIProvider(2, 'key123')
         await claude.generateCommitMessage('diff', 'orig', false, 10, 0.9)
         expect((global.fetch as jest.Mock).mock.calls[0][0]).toBe(
             'https://api.anthropic.com/v1/messages'
@@ -310,8 +310,8 @@ describe('providers.ts', () => {
         })
 
         // Test Mistral
-        ;({ createAIProvider } = await import('../src/providers.js'))
-        let mistral = createAIProvider(3, 'key123')
+        ;({ createAIProvider } = await import('../src/providers'))
+        const mistral = createAIProvider(3, 'key123')
         await mistral.generateCommitMessage('diff', 'orig', false, 10, 0.9)
         expect((global.fetch as jest.Mock).mock.calls[0][0]).toBe(
             'https://api.mistral.ai/v1/chat/completions'
@@ -327,8 +327,8 @@ describe('providers.ts', () => {
         })
 
         // Test Deepseek
-        ;({ createAIProvider } = await import('../src/providers.js'))
-        let deepseek = createAIProvider(4, 'key123')
+        ;({ createAIProvider } = await import('../src/providers'))
+        const deepseek = createAIProvider(4, 'key123')
         await deepseek.generateCommitMessage('diff', 'orig', false, 10, 0.9)
         expect((global.fetch as jest.Mock).mock.calls[0][0]).toBe(
             'https://api.deepseek.com/v1/chat/completions'
@@ -344,8 +344,8 @@ describe('providers.ts', () => {
         })
 
         // Test Grok
-        ;({ createAIProvider } = await import('../src/providers.js'))
-        let grok = createAIProvider(5, 'key123')
+        ;({ createAIProvider } = await import('../src/providers'))
+        const grok = createAIProvider(5, 'key123')
         await grok.generateCommitMessage('diff', 'orig', false, 10, 0.9)
         expect((global.fetch as jest.Mock).mock.calls[0][0]).toBe(
             'https://api.x.ai/v1/chat/completions'
@@ -361,8 +361,8 @@ describe('providers.ts', () => {
         })
 
         // Test Hugging Face
-        ;({ createAIProvider } = await import('../src/providers.js'))
-        let huggingface = createAIProvider(6, 'key123')
+        ;({ createAIProvider } = await import('../src/providers'))
+        const huggingface = createAIProvider(6, 'key123')
         await huggingface.generateCommitMessage('diff', 'orig', false, 10, 0.9)
         expect((global.fetch as jest.Mock).mock.calls[0][0]).toBe(
             'https://api-inference.huggingface.co/v1/chat/completions'

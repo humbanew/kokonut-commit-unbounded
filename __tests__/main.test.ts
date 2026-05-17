@@ -13,62 +13,67 @@ import {
     it,
     jest
 } from '@jest/globals'
-import * as core from '../__fixtures__/core.js'
-import { wait } from '../__fixtures__/wait.js'
+import * as core from '../__fixtures__/core'
+import { wait } from '../__fixtures__/wait'
 
 // Mock fetch globally
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 ;(global as any).fetch = jest.fn()
 
-// Mocks should be declared before the module being tested is imported.
-jest.unstable_mockModule('@actions/core', () => core)
-jest.unstable_mockModule('../src/wait.js', () => ({ wait }))
-jest.unstable_mockModule('octokit', () => ({
-    Octokit: jest.fn().mockImplementation(() => ({
-        pulls: {
-            listCommits: jest.fn().mockResolvedValue({
-                data: [
-                    {
-                        sha: 'abc123def456',
-                        commit: {
-                            message: 'fix: update authentication logic'
-                        }
-                    }
-                ]
-            })
-        },
-        repos: {
-            getCommit: jest.fn().mockResolvedValue({
-                data: {
-                    files: [
-                        {
-                            filename: 'src/auth.ts',
-                            patch: '+++ fixed auth logic'
-                        }
-                    ]
-                }
-            })
-        }
-    }))
-}))
-jest.unstable_mockModule('fs', () => ({
-    default: {
-        readFileSync: jest.fn().mockReturnValue(
-            JSON.stringify({
-                pull_request: {
-                    number: 1
-                }
-            })
-        )
-    }
-}))
+// Mocks will be (re)declared inside each test to ensure a fresh module
+// evaluation when importing src/main.
 
-// The module being tested should be imported dynamically. This ensures that the
-// mocks are used in place of any actual dependencies.
-const { run } = await import('../src/main.js')
+// The module being tested will be imported dynamically within each test.
+// This ensures mocks are configured before the module is evaluated.
 
 describe('main.ts', () => {
     beforeEach(() => {
+        // Reset module registry so each test imports a fresh module instance.
+        jest.resetModules()
+
+        // Register mocks for modules used by src/main
+        jest.unstable_mockModule('@actions/core', () => core)
+        jest.unstable_mockModule('../src/wait', () => ({ wait }))
+        jest.unstable_mockModule('octokit', () => ({
+            Octokit: jest.fn().mockImplementation(() => ({
+                pulls: {
+                    listCommits: jest.fn().mockResolvedValue({
+                        data: [
+                            {
+                                sha: 'abc123def456',
+                                commit: {
+                                    message: 'fix: update authentication logic'
+                                }
+                            }
+                        ]
+                    })
+                },
+                repos: {
+                    getCommit: jest.fn().mockResolvedValue({
+                        data: {
+                            files: [
+                                {
+                                    filename: 'src/auth.ts',
+                                    patch: '+++ fixed auth logic'
+                                }
+                            ]
+                        }
+                    })
+                }
+            }))
+        }))
+        jest.unstable_mockModule('fs', () => ({
+            default: {
+                existsSync: jest.fn().mockReturnValue(true),
+                readFileSync: jest.fn().mockReturnValue(
+                    JSON.stringify({
+                        pull_request: {
+                            number: 1
+                        }
+                    })
+                )
+            }
+        }))
         // Set the action's inputs as return values
         core.getBooleanInput.mockImplementation((input: string) => {
             if (input === 'isGoogleGemini') return true
@@ -111,6 +116,7 @@ describe('main.ts', () => {
     })
 
     it('Should succeed with one provider selected and valid tokens', async () => {
+        const { run } = await import('../src/main')
         await run()
 
         // Verify tokens were validated
@@ -122,6 +128,7 @@ describe('main.ts', () => {
     it('Should fail when no AI provider is selected', async () => {
         core.getBooleanInput.mockImplementation(() => false)
 
+        const { run } = await import('../src/main')
         await run()
 
         expect(core.setFailed).toHaveBeenCalledWith(
@@ -137,6 +144,7 @@ describe('main.ts', () => {
             return false
         })
 
+        const { run } = await import('../src/main')
         await run()
 
         expect(core.setFailed).toHaveBeenCalledWith(
@@ -150,6 +158,7 @@ describe('main.ts', () => {
             return 'valid-token'
         })
 
+        const { run } = await import('../src/main')
         await run()
 
         expect(core.setFailed).toHaveBeenCalledWith(
@@ -163,6 +172,7 @@ describe('main.ts', () => {
             return 'valid-token'
         })
 
+        const { run } = await import('../src/main')
         await run()
 
         expect(core.setFailed).toHaveBeenCalledWith(
@@ -178,6 +188,7 @@ describe('main.ts', () => {
             return false
         })
 
+        const { run } = await import('../src/main')
         await run()
 
         // Verify that includeEmojis input was processed without errors
@@ -200,6 +211,7 @@ describe('main.ts', () => {
             return ''
         })
 
+        const { run } = await import('../src/main')
         await run()
 
         // Verify that commitPrefix input was processed without errors

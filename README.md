@@ -15,16 +15,7 @@
 Kokonut Commit is a small CLI for working with Git hooks and basic action setup
 flows. The current command set focuses on four areas:
 
-- Managing configuration with `config` and `cfg`
-- Bootstrapping credentials with `setup`
-- Listing available models with `models`
-- Installing and removing commit hooks with `hook`
-
 ## Requirements
-
-- Node.js 24 or newer
-- Git installed and available on the `PATH`
-- A repository initialized with Git when using repository-scoped hook commands
 
 ## Install
 
@@ -37,21 +28,6 @@ npm install -g kokonut-commit-action
 
 If you are using it inside this repository, you can also run the bundled CLI
 directly from the project workspace.
-
-## Quick Start
-
-Show the top-level usage help:
-
-```bash
-kokonut-commit
-```
-
-Set local configuration:
-
-```bash
-kokonut-commit config set provider openai
-kokonut-commit config set apiKey sk-your-key
-```
 
 Install the default hook in the current repository:
 
@@ -237,6 +213,21 @@ generation:
 | 4     | Deepseek         | `api.deepseek.com`                  | `KOKONUT_API_KEY`     |
 | 5     | Grok             | `api.x.ai`                          | `KOKONUT_API_KEY`     |
 | 6     | Hugging Face     | `api-inference.huggingface.co`      | `KOKONUT_API_KEY`     |
+
+### GitHub Action Inputs
+
+When used as a GitHub Action, select exactly one provider with the matching
+boolean input:
+
+| Provider         | Input flag          |
+| ---------------- | ------------------- |
+| Google Gemini    | `isGoogleGemini`    |
+| OpenAI ChatGPT   | `isOpenAIChatGPT`   |
+| Anthropic Claude | `isAnthropicClaude` |
+| Mistral Le Chat  | `isMistralLeChat`   |
+| Deepseek         | `isDeepseek`        |
+| Grok             | `isGrok`            |
+| Hugging Face     | `isHuggingFace`     |
 
 ### Configuration
 

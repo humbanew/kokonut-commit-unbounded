@@ -27,7 +27,8 @@ export default [
             '**/dist',
             '**/linter',
             '**/node_modules',
-            '**/scripts'
+            '**/scripts',
+            'commitlint.config.js'
         ]
     },
     ...compat.extends(

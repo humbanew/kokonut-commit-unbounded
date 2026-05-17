@@ -1,5 +1,5 @@
 name: Kokonut Commit
-description: A enhanced review commit messages for your repository.
+description: Enhanced review of commit messages for your repository.
 author: humbanew
 
 # Add your action's branding here. This will appear on the GitHub Marketplace.
@@ -10,59 +10,79 @@ branding:
 # Define your inputs here.
 inputs:
     isGoogleGemini:
-        description: Confirm if the Google Gemini token been used.
-        require: false
+        description: Set to true if a Google Gemini token is used.
+        required: false
         default: false
     isOpenAIChatGPT:
-        description: Confirm if the OpenAI ChatGPT token been used.
-        require: false
+        description: Set to true if an OpenAI ChatGPT token is used.
+        required: false
         default: false
     isAnthropicClaude:
-        description: Confirm if the Anthropic Claude token been used.
-        require: false
+        description: Set to true if an Anthropic Claude token is used.
+        required: false
         default: false
     isMistralLeChat:
-        description: Confirm if the Mistral Le Chat token been used.
-        require: false
+        description: Set to true if a Mistral Le Chat token is used.
+        required: false
         default: false
+    isDeepseek:
+        description: Set to true if a Deepseek token is used.
+        required: false
+        default: false
+    isGrok:
+        description: Set to true if a Grok token is used.
+        required: false
+        default: false
+    isHuggingFace:
+        description: Set to true if a Hugging Face token is used.
+        required: false
+        default: false
+    commitPreset:
+        description: Commit message preset to use for the repository.
+        required: false
+        default: 'default'
+    dryRun:
+        description: Generate preview outputs without creating PR comments.
+        required: false
+        default: 'false'
     aiTokenApi:
-        description: The token from your selected artificial intelligence api.
-        require: true
+        description: The token from your selected artificial intelligence API.
+        required: true
         default: ''
     githubTokenApi:
-        description: The token from Github api.
-        require: true
+        description: The token from GitHub API.
+        required: true
         default: ''
     autoRenameCommits:
         description: Enable automatic commit renaming using AI.
-        require: false
+        required: false
         default: 'false'
     includeEmojis:
         description: Include emojis in AI-generated commit messages.
-        require: false
+        required: false
         default: 'false'
     commitPrefix:
         description:
             Custom prefix to add before commit messages (e.g., 'JIRA-123').
-        require: false
+        required: false
         default: ''
     topK:
         description:
             Controls diversity via filtering to only top K options (higher =
             more creative).
-        require: false
+        required: false
         default: '20'
     topP:
         description:
             Controls diversity via nucleus sampling (0-1, higher = more
             creative).
-        require: false
+        required: false
         default: '0.9'
     renameMode:
         description:
             'Rename mode: "pr" (suggest in PR comment) or "force" (force commit
             with new messages).'
-        require: false
+        required: false
         default: 'pr'
 
 # Define your outputs here.
@@ -73,6 +93,10 @@ outputs:
         description: List of improved commit messages
     prCommentUrl:
         description: URL of the PR comment with suggestions (when using PR mode)
+    confidenceSummary:
+        description: Heuristic confidence summary for the generated suggestions
+    previewSuggestions:
+        description: Preview-only suggestions when dryRun is enabled
 
 # Define the runtime environment for your action here.
 runs:

@@ -2,7 +2,7 @@ import {
     validateCommitMessage,
     formatErrors,
     CommitlintResult
-} from '../src/commitlint-validator.js'
+} from '../src/commitlint-validator'
 
 describe('commitlint-validator', () => {
     describe('validateCommitMessage', () => {

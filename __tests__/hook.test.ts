@@ -31,9 +31,8 @@ describe('hook commands', () => {
             const setRes = runCli(['hook', 'set'], {}, tmp)
             // debug output if something goes wrong
             if (setRes.status !== 0) {
-                // eslint-disable-next-line no-console
                 console.error('setRes stdout:', setRes.stdout)
-                // eslint-disable-next-line no-console
+
                 console.error('setRes stderr:', setRes.stderr)
             }
             expect(setRes.status).toBe(0)
@@ -49,9 +48,8 @@ describe('hook commands', () => {
 
             const unsetRes = runCli(['hook', 'unset'], {}, tmp)
             if (unsetRes.status !== 0) {
-                // eslint-disable-next-line no-console
                 console.error('unsetRes stdout:', unsetRes.stdout)
-                // eslint-disable-next-line no-console
+
                 console.error('unsetRes stderr:', unsetRes.stderr)
             }
             expect(unsetRes.status).toBe(0)
@@ -73,9 +71,8 @@ describe('hook commands', () => {
 
             const setRes = runCli(['hook', 'set', '--usr', customDir], {}, tmp)
             if (setRes.status !== 0) {
-                // eslint-disable-next-line no-console
                 console.error('custom set stdout:', setRes.stdout)
-                // eslint-disable-next-line no-console
+
                 console.error('custom set stderr:', setRes.stderr)
             }
             expect(setRes.status).toBe(0)
@@ -100,9 +97,8 @@ describe('hook commands', () => {
                 tmp
             )
             if (unsetRes.status !== 0) {
-                // eslint-disable-next-line no-console
                 console.error('custom unset stdout:', unsetRes.stdout)
-                // eslint-disable-next-line no-console
+
                 console.error('custom unset stderr:', unsetRes.stderr)
             }
             expect(unsetRes.status).toBe(0)
@@ -129,9 +125,8 @@ describe('hook commands', () => {
             const env = { HOME: tmpHome, USERPROFILE: tmpHome }
             const setRes = runCli(['hook', 'set', '--global'], env, undefined)
             if (setRes.status !== 0) {
-                // eslint-disable-next-line no-console
                 console.error('global set stdout:', setRes.stdout)
-                // eslint-disable-next-line no-console
+
                 console.error('global set stderr:', setRes.stderr)
             }
             expect(setRes.status).toBe(0)
@@ -150,9 +145,8 @@ describe('hook commands', () => {
                 undefined
             )
             if (unsetRes.status !== 0) {
-                // eslint-disable-next-line no-console
                 console.error('global unset stdout:', unsetRes.stdout)
-                // eslint-disable-next-line no-console
+
                 console.error('global unset stderr:', unsetRes.stderr)
             }
             expect(unsetRes.status).toBe(0)

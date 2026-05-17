@@ -5,6 +5,7 @@
 export interface Config {
     version: string
     provider?: number
+    fallbackProviders?: number[]
     apiKey?: string
     apiUrl?: string
     temperature?: number
@@ -16,6 +17,8 @@ export interface Config {
     stopSequences?: string[]
     prefix?: string
     includeEmojis?: boolean
+    commitPreset?: string
+    dryRun?: boolean
 }
 
 export interface ConfigVersion {
@@ -30,6 +33,7 @@ const CONFIG_VERSIONS: ConfigVersion[] = [
         defaults: {
             version: '0.0.0',
             provider: 1,
+            fallbackProviders: [],
             temperature: 0.7,
             topP: 0.9,
             topK: 40,
@@ -38,7 +42,9 @@ const CONFIG_VERSIONS: ConfigVersion[] = [
             presencePenalty: 0,
             stopSequences: [],
             prefix: '',
-            includeEmojis: true
+            includeEmojis: true,
+            commitPreset: 'default',
+            dryRun: false
         }
     }
 ]
@@ -61,21 +67,23 @@ export function getDefaults(): Config {
 /**
  * Migrate configuration from one version to another
  */
-export function migrateConfig(config: any): Config {
-    const configVersion = config.version || '0.0.0'
+export function migrateConfig(config: unknown): Config {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const cfg: any = config as any
+    const configVersion = cfg.version || '0.0.0'
 
     // If already at current version, just validate
     if (configVersion === CURRENT_VERSION) {
         return {
             ...getDefaults(),
-            ...config
+            ...cfg
         }
     }
 
     // No migrations needed for v0.0.0 - return as-is with current version
     return {
         ...getDefaults(),
-        ...config,
+        ...cfg,
         version: CURRENT_VERSION
     }
 }
@@ -100,6 +108,23 @@ export function validateConfig(config: Config): {
             config.provider > 6
         ) {
             errors.push(`Invalid provider: ${config.provider} (must be 0-6)`)
+        }
+    }
+
+    if (config.fallbackProviders !== undefined) {
+        if (!Array.isArray(config.fallbackProviders)) {
+            errors.push(
+                'Invalid fallbackProviders: must be an array of provider indexes'
+            )
+        } else if (
+            !config.fallbackProviders.every(
+                (provider) =>
+                    Number.isInteger(provider) && provider >= 0 && provider <= 6
+            )
+        ) {
+            errors.push(
+                'Invalid fallbackProviders: all items must be integers between 0 and 6'
+            )
         }
     }
 
@@ -198,6 +223,19 @@ export function validateConfig(config: Config): {
         )
     }
 
+    if (
+        config.commitPreset !== undefined &&
+        typeof config.commitPreset !== 'string'
+    ) {
+        errors.push(
+            `Invalid commitPreset: ${config.commitPreset} (must be string)`
+        )
+    }
+
+    if (config.dryRun !== undefined && typeof config.dryRun !== 'boolean') {
+        errors.push(`Invalid dryRun: ${config.dryRun} (must be boolean)`)
+    }
+
     return {
         valid: errors.length === 0,
         errors
@@ -207,7 +245,7 @@ export function validateConfig(config: Config): {
 /**
  * Merge user config with defaults, applying migrations
  */
-export function mergeWithDefaults(userConfig: any): Config {
+export function mergeWithDefaults(userConfig: unknown): Config {
     const migratedConfig = migrateConfig(userConfig)
     const validation = validateConfig(migratedConfig)
 

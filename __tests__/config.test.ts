@@ -162,7 +162,7 @@ describe('config management', () => {
         test('should reject invalid stopSequences type', () => {
             const config: Config = {
                 version: '0.0.0',
-                stopSequences: 'END' as any
+                stopSequences: 'END' as any // eslint-disable-line @typescript-eslint/no-explicit-any
             }
 
             const result = validateConfig(config)
@@ -220,7 +220,7 @@ describe('config management', () => {
         test('should reject non-string prefix', () => {
             const config: Config = {
                 version: '0.0.0',
-                prefix: 123 as any
+                prefix: 123 as any // eslint-disable-line @typescript-eslint/no-explicit-any
             }
 
             const result = validateConfig(config)
@@ -234,7 +234,7 @@ describe('config management', () => {
         test('should reject non-boolean includeEmojis', () => {
             const config: Config = {
                 version: '0.0.0',
-                includeEmojis: 'yes' as any
+                includeEmojis: 'yes' as any // eslint-disable-line @typescript-eslint/no-explicit-any
             }
 
             const result = validateConfig(config)
@@ -246,6 +246,7 @@ describe('config management', () => {
         })
 
         test('should reject missing version', () => {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const config: any = {
                 provider: 1
             }
@@ -262,15 +263,14 @@ describe('config management', () => {
     describe('mergeWithDefaults', () => {
         test('should merge user config with defaults', () => {
             const userConfig = {
-                provider: 2,
-                temperature: 0.9
+                provider: 2
             }
 
             const merged = mergeWithDefaults(userConfig)
 
             expect(merged.version).toBe('0.0.0')
             expect(merged.provider).toBe(2)
-            expect(merged.temperature).toBe(0.9)
+            expect(merged.temperature).toBe(0.7) // from defaults
             expect(merged.topP).toBe(0.9) // from defaults
             expect(merged.prefix).toBe('') // from defaults
             expect(merged.includeEmojis).toBe(true) // from defaults

@@ -22,7 +22,8 @@ if (args.includes('--help') || args.includes('-h')) {
             '  provider (0-6), temperature (0-2), topP (0-1), topK (0-100)\n' +
             '  maxTokens (1-65536), frequencyPenalty (-2 to 2)\n' +
             '  presencePenalty (-2 to 2), stopSequences (comma-separated)\n' +
-            '  prefix (string), includeEmojis (true|false)\n'
+            '  prefix (string), includeEmojis (true|false)\n' +
+            '  commitPreset (string), dryRun (true|false), fallbackProviders (comma-separated indexes)\n'
     )
     process.exit(0)
 }
@@ -40,7 +41,8 @@ if (args.length === 0) {
             '  provider (0-6), temperature (0-2), topP (0-1), topK (0-100)\n' +
             '  maxTokens (1-65536), frequencyPenalty (-2 to 2)\n' +
             '  presencePenalty (-2 to 2), stopSequences (comma-separated)\n' +
-            '  prefix (string), includeEmojis (true|false)\n'
+            '  prefix (string), includeEmojis (true|false)\n' +
+            '  commitPreset (string), dryRun (true|false), fallbackProviders (comma-separated indexes)\n'
     )
     process.exit(0)
 }
@@ -109,7 +111,9 @@ export async function promptForMissingApiKey(): Promise<boolean> {
     } finally {
         try {
             rl.close()
-        } catch (e) {}
+        } catch {
+            /* ignore */
+        }
     }
 }
 
@@ -203,7 +207,9 @@ if (cmd === 'setup') {
         } finally {
             try {
                 rl.close()
-            } catch (e) {}
+            } catch {
+                /* ignore */
+            }
         }
         process.exit(0)
     }
@@ -311,7 +317,7 @@ if (cmd === 'models') {
                     console.log(JSON.stringify(data, null, 2))
                 }
             } else if (provider === 'ollama') {
-                const url: any = apiUrl || 'http://localhost:11434/api/models'
+                const url = apiUrl || 'http://localhost:11434/api/models'
                 const res = await fetch(url)
                 const data = await res.json()
                 console.log(JSON.stringify(data, null, 2))
@@ -383,8 +389,8 @@ if (cmd === 'hook') {
                     'core.hooksPath',
                     globalHooksDir
                 ])
-            } catch (e) {
-                // ignore
+            } catch {
+                /* ignore */
             }
             console.log('Installed global hook at', targetGlobalHook)
             process.exit(0)
@@ -495,8 +501,8 @@ if (cmd === 'hook') {
                             'core.hooksPath'
                         ])
                     }
-                } catch (e) {
-                    // ignore
+                } catch {
+                    /* ignore */
                 }
                 process.exit(0)
             }
@@ -556,8 +562,8 @@ if (cmd === 'hook') {
                             'core.hooksPath'
                         ])
                     }
-                } catch (e) {
-                    // ignore
+                } catch {
+                    /* ignore */
                 }
                 process.exit(0)
             }
